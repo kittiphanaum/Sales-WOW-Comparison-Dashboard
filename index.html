@@ -114,6 +114,11 @@ th.asc::after{content:'▲';font-size:9px}th.desc::after{content:'▼';font-size
 .atbl tr:hover td{background:var(--accent-soft)}
 .atbl tr.selrow td{background:var(--accent-soft);box-shadow:inset 0 0 0 0 var(--accent)}
 .atbl tr.selrow td:first-child{border-left:4px solid var(--accent)}
+.atbl tr.lv3 td{font-size:12.5px;background:var(--card2)}
+.atbl tr.lv3 td:first-child{padding-left:70px;font-weight:500}
+.atbl tr.lv4 td{font-size:12px;background:var(--card2);color:var(--ink2)}
+.atbl tr.lv4 td:first-child{padding-left:108px;white-space:normal}
+.bdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;border:1px solid var(--line)}
 .atbl .cbtn{display:inline-block;width:18px;color:var(--muted)}
 .detailhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 2px 10px}
 .detailhead h2{margin:0;font-size:18px}
@@ -460,6 +465,7 @@ function renderAreaTable(){
   if(!regs.length){el.innerHTML='<div class="empty">ไม่มีข้อมูลตาม Filter ที่เลือก</div>';return}
   const cells=o=>['q','n'].map((p,j)=>{const a=o[p+'A'],b=o[p+'B'],d=a-b;return `<td class="${j?'sep':''}">${fmt0(b)}</td><td>${fmt0(a)}</td><td class="${cls(d)}">${fmtS(d)}</td><td>${pct(a,b)}</td>`}).join('');
   const th=(k,l,c='')=>`<th data-k="${k}" class="${c} ${srt.k===k?(srt.d>0?'asc':'desc'):''}">${l}</th>`;
+  const bsort=(x,y)=>srt.k==='N'?sorter(x,y):(srt.k[0]==='q'?((y.o.qA-y.o.qB)-(x.o.qA-x.o.qB)):((y.o.nA-y.o.nB)-(x.o.nA-x.o.nB)));
   const isSel=(l,k)=>S.sel&&S.sel.lvl===l&&String(S.sel.key)===String(k);
   let h=`<table class="tbl atbl"><thead><tr><th rowspan="2" data-k="N" class="${srt.k==='N'?(srt.d>0?'asc':'desc'):''}">Region / Area / สาขา</th><th colspan="4" class="grp sep">QTY</th><th colspan="4" class="grp sep">Net Amount (฿)</th></tr><tr>
    ${th('qB','W'+R.b,'sep')}${th('qA','W'+R.a)}${th('qD','ส่วนต่าง')}${th('qP','%WoW')}${th('nB','W'+R.b,'sep')}${th('nA','W'+R.a)}${th('nD','ส่วนต่าง')}${th('nP','%WoW')}</tr></thead><tbody>`;
@@ -468,11 +474,22 @@ function renderAreaTable(){
     if(!or)continue;
     for(const ar of Object.values(rg.areas).sort(sorter)){const ka='A|'+ar.name,oa=S.aopen.has(ka);
       h+=`<tr class="lv1 ${isSel('A',ar.name)?'selrow':''}" data-l="A" data-k="${ar.name}"><td><span class="cbtn" data-x="${ka}">${oa?'▾':'▸'}</span>${ar.name} <span style="color:var(--muted);font-size:11.5px">(${ar.shops.length} สาขา)</span></td>${cells(ar.o)}</tr>`;
-      if(oa)ar.shops.sort(sorter).forEach(sp=>{h+=`<tr class="lv2 ${isSel('S',sp.id)?'selrow':''}" data-l="S" data-k="${sp.id}"><td>${sp.name}</td>${cells(sp.o)}</tr>`});
+      if(oa)ar.shops.sort(sorter).forEach(sp=>{const ks='S|'+sp.id,os=S.aopen.has(ks);
+        h+=`<tr class="lv2 ${isSel('S',sp.id)?'selrow':''}" data-l="S" data-k="${sp.id}"><td><span class="cbtn" data-x="${ks}">${os?'▾':'▸'}</span>${sp.name}</td>${cells(sp.o)}</tr>`;
+        if(!os)return;
+        const ag=aggBrand(new Set([sp.id]));
+        const bs=Object.entries(ag.brand).map(([i,o])=>({id:+i,name:D.brands[i],o})).filter(x=>x.o.qA||x.o.qB||x.o.nA||x.o.nB).sort(bsort);
+        if(!bs.length){h+=`<tr class="lv3"><td colspan="9" class="zero">ไม่มีข้อมูล</td></tr>`;return}
+        bs.forEach(bd=>{const kb='B|'+sp.id+'|'+bd.id,ob=S.aopen.has(kb),c=(BC[bd.name]||['#cdbba5'])[0];
+          h+=`<tr class="lv3" data-t="${kb}"><td><span class="cbtn">${ob?'▾':'▸'}</span><i class="bdot" style="background:${c}"></i>${bd.name}</td>${cells(bd.o)}</tr>`;
+          if(ob)Object.entries(bd.o.subs).map(([i,o])=>({name:D.subs[i],o})).filter(x=>x.o.qA||x.o.qB||x.o.nA||x.o.nB).sort(bsort).forEach(sb=>{h+=`<tr class="lv4"><td>${sb.name}</td>${cells(sb.o)}</tr>`});
+        });
+      });
     }}
   h+=`<tr class="total"><td>รวม</td>${cells(R.tot)}</tr></tbody></table>`;
   el.innerHTML=h;
   el.querySelectorAll('.cbtn').forEach(c=>c.onclick=e=>{e.stopPropagation();const k=c.dataset.x;S.aopen.has(k)?S.aopen.delete(k):S.aopen.add(k);renderAreaTable()});
+  el.querySelectorAll('tbody tr[data-t]').forEach(tr=>tr.onclick=()=>{const k=tr.dataset.t;S.aopen.has(k)?S.aopen.delete(k):S.aopen.add(k);renderAreaTable()});
   el.querySelectorAll('tbody tr[data-l]').forEach(tr=>tr.onclick=()=>{const l=tr.dataset.l,k=tr.dataset.k;
     if(isSel(l,k))S.sel=null;else{S.sel={lvl:l,key:k};if(l!=='S')S.aopen.add(l+'|'+k)}
     renderAreaTable();renderDetail();renderRank();});
