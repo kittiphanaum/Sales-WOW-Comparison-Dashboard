@@ -224,6 +224,7 @@ body.wide #tabRank .card{padding:12px 10px}
 .ht.dv .mid{position:absolute;left:50%;top:-3px;bottom:-3px;border-left:1px solid var(--muted)}
 .ht.dv>i.p{background:var(--pos);border-radius:0 4px 4px 0}.ht.dv>i.n{background:var(--neg);border-radius:4px 0 0 4px;left:auto}
 .hv{font-weight:600;min-width:52px;text-align:right;white-space:nowrap}
+.hv .hq{font-weight:500;font-size:10.5px;color:var(--ink2);font-style:normal}
 .hv2{display:flex;gap:5px;align-items:baseline;white-space:nowrap;font-size:11.5px}.hv2 span{color:var(--muted)}.hv2 span.pos{color:var(--pos);font-weight:600}.hv2 span.neg{color:var(--neg);font-weight:600}
 .hfoot{margin-top:auto;padding-top:8px;font-size:10.5px;color:var(--muted)}
 .lgk{display:inline-block;width:12px;height:8px;border-radius:2px;margin:0 3px 0 6px;vertical-align:0}.tgk{background:color-mix(in srgb,var(--ink) 16%,transparent)}.ack{background:var(--accent)}
@@ -1523,14 +1524,14 @@ const nmCell=o=>`<span class="sn">${o.name}</span>`;
 const tipAttr=o=>`data-tip="${(`<b>${o.name}</b><br>Target ${fmt0(o.t||0)} · Actual MTD ${fmt0(o.a||0)}<br>Run Rate ${fmt0(o.rr||0)} · %RR Ach ${spct(o.rach)}<br>%Ach (MTD) ${spct(o.ach)} · MOM ${sgn(o.mom)} · WoW ${sgn(o.wow)}`).replace(/"/g,'&quot;')}"`;
 // 1/7 : %RR Achieve
 function chRach(list){const L=list.filter(o=>o.rach!=null).sort((x,y)=>y.rach-x.rach),mx=Math.max(1.2,...L.map(o=>o.rach));
-  return `<div class="hb">${L.map(o=>`<div class="hr" ${tipAttr(o)}><div class="hl">${nmCell(o)}</div><div class="ht"><i style="width:${Math.min(100,o.rach/mx*100)}%;background:${o.col}"></i><em class="ref" style="left:${1/mx*100}%"></em></div><div class="hv ${o.rach>=1?'pos':'neg'}">${spct(o.rach)}</div></div>`).join('')}</div><div class="hfoot">เส้นประ = 100% Target</div>`}
+  return `<div class="hb">${L.map(o=>`<div class="hr" ${tipAttr(o)}><div class="hl">${nmCell(o)}</div><div class="ht"><i style="width:${Math.min(100,o.rach/mx*100)}%;background:${o.col}"></i><em class="ref" style="left:${1/mx*100}%"></em></div><div class="hv ${o.rach>=1?'pos':'neg'}">${spct(o.rach)} <small class="hq">(${sfmt(o.rr)})</small></div></div>`).join('')}</div><div class="hfoot">เส้นประ = 100% Target</div>`}
 // 3/9 : Target vs Actual bullet
 function chTA(list){const L=list.filter(o=>o.t||o.a).sort((x,y)=>y.a-x.a),mx=Math.max(1,...L.map(o=>Math.max(o.t,o.a)));
   return `<div class="hb">${L.map(o=>`<div class="hr" ${tipAttr(o)}><div class="hl">${nmCell(o)}</div><div class="ht bt"><span class="tg" style="width:${o.t/mx*100}%"></span><i style="width:${o.a/mx*100}%;background:${o.col}"></i></div><div class="hv2"><b>${sfmt(o.a)}</b><span>/ ${sfmt(o.t)}</span><span class="${o.ach!=null&&o.ach>=TTP()?'pos':'neg'}">${spct(o.ach,0)}</span></div></div>`).join('')}</div><div class="hfoot"><span class="lgk tgk"></span>Target ทั้งเดือน <span class="lgk ack"></span>Actual MTD · %Ach = Actual ÷ Target (เวลาผ่านไป ${(TTP()*100).toFixed(0)}% ของเดือน)</div>`}
 let _ttp=0;const TTP=()=>_ttp;
 // 4,5,10,11 diverging
-function chDiv(list,key,foot){const L=list.filter(o=>o[key]!=null&&isFinite(o[key])).sort((x,y)=>y[key]-x[key]),mx=Math.max(0.05,...L.map(o=>Math.abs(o[key])));
-  return `<div class="hb">${L.map(o=>{const v=o[key],w=Math.abs(v)/mx*50;return `<div class="hr" ${tipAttr(o)}><div class="hl">${nmCell(o)}</div><div class="ht dv"><em class="mid"></em><i class="${v>=0?'p':'n'}" style="${v>=0?`left:50%`:`right:50%`};width:${w}%"></i></div><div class="hv ${v>=0?'pos':'neg'}">${sgn(v)}</div></div>`}).join('')}</div><div class="hfoot">${foot}</div>`}
+function chDiv(list,key,foot,dk){const L=list.filter(o=>o[key]!=null&&isFinite(o[key])).sort((x,y)=>y[key]-x[key]),mx=Math.max(0.05,...L.map(o=>Math.abs(o[key])));
+  return `<div class="hb">${L.map(o=>{const v=o[key],w=Math.abs(v)/mx*50;return `<div class="hr" ${tipAttr(o)}><div class="hl">${nmCell(o)}</div><div class="ht dv"><em class="mid"></em><i class="${v>=0?'p':'n'}" style="${v>=0?`left:50%`:`right:50%`};width:${w}%"></i></div><div class="hv ${v>=0?'pos':'neg'}">${sgn(v)} <small class="hq">(${dk(o)>=0?'+':'−'}${sfmt(Math.abs(dk(o)))})</small></div></div>`}).join('')}</div><div class="hfoot">${foot}</div>`}
 // 6,12 top10
 function chTop(list,sub){const mx=Math.max(1,...list.map(o=>o.a));
   return `<div class="hb">${list.map((o,i)=>`<div class="hr" data-tip="${(`<b>${o.name}</b><br>${sub(o)}<br>Actual MTD ${fmt0(o.a)}`).replace(/"/g,'&quot;')}"><div class="hl"><span class="rk">${i+1}</span><span class="sn">${o.name}<small>${sub(o)}</small></span></div><div class="ht"><i style="width:${o.a/mx*100}%;background:${o.col}"></i></div><div class="hv"><b>${sfmt(o.a)}</b></div></div>`).join('')}</div>`}
@@ -1546,12 +1547,13 @@ function draw3D(cv,items,center,sub){const box=cv.parentNode;const W=Math.max(24
   c.save();c.beginPath();c.ellipse(cx,cy,rx*ir,ry*ir,0,0,Math.PI*2);c.clip();c.beginPath();c.ellipse(cx,cy+depth,rx*ir,ry*ir,0,0,Math.PI*2);c.fillStyle=card;c.fill();c.restore();
   c.textAlign='center';c.textBaseline='middle';
   sl.forEach(s=>{const f=s.x.v/tot;if(f<0.03)return;const m=(s.a0+s.a1)/2,r=(1+ir)/2,x=cx+Math.cos(m)*rx*r,y=cy+Math.sin(m)*ry*r;c.fillStyle=s.x.tc||'#fff';c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=2;
-    if(f>=0.06){c.font='700 11px "Noto Sans Thai Looped",sans-serif';c.fillText(s.x.ab||'',x,y-7);c.font='600 10px "Noto Sans Thai Looped",sans-serif';c.fillText(Math.round(f*100)+'%',x,y+6)}else{c.font='700 9.5px "Noto Sans Thai Looped",sans-serif';c.fillText(s.x.ab||'',x,y)}c.shadowBlur=0});
+    if(f>=0.06){c.font='700 11px "Noto Sans Thai Looped",sans-serif';c.fillText(s.x.ab||'',x,y-12);c.font='600 10px "Noto Sans Thai Looped",sans-serif';c.fillText(sfmt(s.x.v),x,y);c.fillText(Math.round(f*100)+'%',x,y+12)}
+    else if(f>=0.035){c.font='700 9.5px "Noto Sans Thai Looped",sans-serif';c.fillText(s.x.ab||'',x,y-6);c.font='600 9px "Noto Sans Thai Looped",sans-serif';c.fillText(sfmt(s.x.v),x,y+5)}else{c.font='700 9.5px "Noto Sans Thai Looped",sans-serif';c.fillText(s.x.ab||'',x,y)}c.shadowBlur=0});
   const ty=cy+depth*0.45,hh=ry*ir*2-depth;c.fillStyle=mut;c.font='10.5px "Noto Sans Thai Looped",sans-serif';c.fillText(sub,cx,ty-hh*0.3);
   c.fillStyle=ink;c.font=`700 ${Math.round(Math.min(22,rx*0.16))}px "Noto Sans Thai Looped",sans-serif`;c.fillText(center,cx,ty+2)}
 function shareBlock(id,list,abFn,fold=true){const L=list.filter(o=>o.a>0).sort((x,y)=>y.a-x.a),tot=L.reduce((s,o)=>s+o.a,0);let items=L;
   if(fold&&L.length>9){const top=L.slice(0,8),rest=L.slice(8);items=[...top,{name:'อื่นๆ ('+rest.length+')',a:rest.reduce((s,o)=>s+o.a,0),col:'#b9ad9f',ab:'อื่นๆ'}]}
-  return {html:`<div class="dnbox"><canvas id="${id}"></canvas></div><div class="dnleg sleg">${items.map(o=>`<div class="lg" data-tip="${(`<b>${o.name}</b><br>${fmt0(o.a)} · ${spct(o.a/tot)}`).replace(/"/g,'&quot;')}"><i style="background:${o.col}"></i>${o.ab&&o.ab!==o.name?`<b class="ab">${o.ab}</b>`:''}<span class="n">${o.name}</span><span class="v">${sfmt(o.a)}</span><span class="p">${spct(o.a/tot)}</span></div>`).join('')}</div>`,
+  return {html:`<div class="dnbox"><canvas id="${id}"></canvas></div><div class="dnleg sleg">${items.map(o=>`<div class="lg" data-tip="${(`<b>${o.name}</b><br>${fmt0(o.a)} · ${spct(o.a/tot)}`).replace(/"/g,'&quot;')}"><i style="background:${o.col}"></i><span class="n">${o.name}</span><span class="v">${sfmt(o.a)}</span><span class="p">${spct(o.a/tot)}</span></div>`).join('')}</div>`,
     draw:()=>draw3D(document.getElementById(id),items.map(o=>({v:o.a,col:o.col,ab:abFn(o),tc:(o.col==='#ffc000'||o.col==='#b9ad9f')?'#222':'#fff'})),sfmt(tot),'Actual MTD รวม')}}
 function renderSummary(){
   const d=sumCompute(),T=d.T;_ttp=d.mtd/d.dim;const u=S.metricS==='qty'?'เครื่อง':'บาท';
@@ -1563,10 +1565,10 @@ function renderSummary(){
   const wf=`%WoW = ${wl}${d.partial?' (เทียบวันต่อวัน)':''}`,mf=`%MOM = Run Rate ÷ ยอด ${D.lmLabel||'เดือนก่อน'} − 1`;
   document.getElementById('sumBrand').innerHTML=
     card(1,'% RR Achieve By Brand','Run Rate ÷ Target',chRach(d.brands))+card(2,'% Share ยอดขาย By Brand','Actual MTD',sb.html)+card(3,'Top Sale By Brand','Target · Actual · %Ach',chTA(d.brands))+
-    card(4,'%WoW By Brand','สัปดาห์ต่อสัปดาห์',chDiv(d.brands,'wow',wf))+card(5,'%MOM By Brand','Run Rate vs เดือนก่อน',chDiv(d.brands,'mom',mf))+card(6,'Top 10 ยอดขายสินค้า By Model','Actual MTD',chTop(d.models,o=>o.brand));
+    card(4,'%WoW By Brand','สัปดาห์ต่อสัปดาห์',chDiv(d.brands,'wow',wf,o=>o.wa-o.wb))+card(5,'%MOM By Brand','Run Rate vs เดือนก่อน',chDiv(d.brands,'mom',mf,o=>o.rr-o.l))+card(6,'Top 10 ยอดขายสินค้า By Model','Actual MTD',chTop(d.models,o=>o.brand));
   document.getElementById('sumArea').innerHTML=
     card(7,'% RR Achieve By Area','Run Rate ÷ Target',chRach(d.areas))+card(8,'% Share ยอดขาย By Area','Actual MTD',sa.html)+card(9,'Top Sale By Area','Target · Actual · %Ach',chTA(d.areas))+
-    card(10,'%WoW By Area','สัปดาห์ต่อสัปดาห์',chDiv(d.areas,'wow',wf))+card(11,'%MOM By Area','Run Rate vs เดือนก่อน',chDiv(d.areas,'mom',mf))+card(12,'Top 10 ยอดขาย By Shop','Actual MTD',chTop(d.shops,o=>o.area+(o.t?' · %Ach '+spct(o.ach,0):'')));
+    card(10,'%WoW By Area','สัปดาห์ต่อสัปดาห์',chDiv(d.areas,'wow',wf,o=>o.wa-o.wb))+card(11,'%MOM By Area','Run Rate vs เดือนก่อน',chDiv(d.areas,'mom',mf,o=>o.rr-o.l))+card(12,'Top 10 ยอดขาย By Shop','Actual MTD',chTop(d.shops,o=>o.area+(o.t?' · %Ach '+spct(o.ach,0):'')));
   sb.draw();sa.draw();
   document.getElementById('sumInfo').innerHTML=`ข้อมูล Handset · MTD 1–${d.mtd} ${TH_MON[d.M-1]} ${d.Y} (${d.dim} วัน) · หน่วย: ${S.metricS==='qty'?'QTY (เครื่อง)':'Net Amount (บาท)'} · ชี้ที่แถบกราฟเพื่อดูรายละเอียด`;
 }
