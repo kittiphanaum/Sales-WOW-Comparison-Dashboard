@@ -303,12 +303,16 @@ body.wide #tabCheck .card{padding:12px 10px}
 .mxt td.mc{text-align:center;font-weight:600;color:#2b2016;border:1px solid var(--card)}
 .mxt td.mc sup{font-size:9.5px;font-weight:500;opacity:.7;margin-left:2px}
 .mxt th.selb{outline:3px solid var(--accent);outline-offset:-3px}
-.avgtb{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.avgtb{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;margin:4px 0 2px;font-variant-numeric:tabular-nums}
 .avgtb th{font-size:11.5px;font-weight:500;color:var(--ink2);text-align:right;padding:2px 4px;line-height:1.15}
 .avgtb th small{font-size:10px;color:var(--muted)}
-.avgtb td{padding:3px 4px;text-align:right;font-weight:600;white-space:nowrap}
+.avgtb td{padding:3px 4px;text-align:right;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avgtb th:first-child,.avgtb td:first-child{width:25%;font-size:11.5px;overflow:visible}
+.avgtb .avd{display:block;font-size:10px;line-height:1.1;font-weight:600}
+.avgk{min-width:0;overflow:hidden}
 .avgtb td:first-child{text-align:left;font-weight:500;color:var(--ink2)}
 .avgtb tbody tr+tr td{border-top:1px solid var(--line)}
+.avgtb .avtot{border-left:1px solid var(--line);font-weight:700;color:var(--accent)}
 .avgg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 @media (max-width:900px){.avgg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .avgt{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
@@ -985,14 +989,14 @@ function avgCardHTML(){
   const ok=new Uint8Array(D.shops.length);D.shops.forEach((s,i)=>{ok[i]=(!S.region.size||S.region.has(s[0]))&&(!S.area.size||S.area.has(s[1]))&&(!S.shop.size||S.shop.has(i))?1:0});
   const t={wd:[0,0],we:[0,0]};
   for(const r of D.rows){const k=dayInfo[r[0]*10+r[1]];if(!k||!ok[r[2]]||!S.type.has(r[3]))continue;if(S.brand.size&&!S.brand.has(r[4]))continue;t[k][0]+=r[6];t[k][1]+=r[7]}
-  const aq=[t.wd[0]/(nwd||1),t.we[0]/(nwe||1)],an=[t.wd[1]/(nwd||1),t.we[1]/(nwe||1)];
-  const mm=v=>v>=1e6?(v/1e6).toFixed(2)+'M':fmt0(v);
-  const dp=(a,b)=>b?`<span class="${cls(a-b)}" style="font-size:11px">${a>=b?'+':''}${((a-b)/b*100).toFixed(0)}%</span>`:'';
+  const nd=nwd+nwe||1,aq=[t.wd[0]/(nwd||1),t.we[0]/(nwe||1),(t.wd[0]+t.we[0])/nd],an=[t.wd[1]/(nwd||1),t.we[1]/(nwe||1),(t.wd[1]+t.we[1])/nd];
+  const mm=v=>v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':fmt0(v);
+  const dp=(a,b)=>b?`<span class="avd ${cls(a-b)}">${a>=b?'+':''}${((a-b)/b*100).toFixed(0)}%</span>`:'';
   return `<div class="card kpi avgk" title="ยอดรวม MTD ÷ จำนวนวัน · Weekday ${nwd} วัน (รวม QTY ${fmt0(t.wd[0])}, Net ${fmt0(t.wd[1])} ฿) · Weekend ${nwe} วัน (รวม QTY ${fmt0(t.we[0])}, Net ${fmt0(t.we[1])} ฿)">
    <div class="lab">ค่าเฉลี่ยยอดขาย / วัน <span class="tag" style="margin-left:4px;font-size:10.5px;padding:1px 7px">ข้อมูล MTD</span></div>
-   <table class="avgtb"><thead><tr><th></th><th>Weekday<br><small>${nwd} วัน</small></th><th>Weekend<br><small>${nwe} วัน</small></th></tr></thead>
-   <tbody><tr><td>QTY</td><td>${fmt0(aq[0])}</td><td>${fmt0(aq[1])} ${dp(aq[1],aq[0])}</td></tr>
-   <tr><td>Net Amt</td><td>${mm(an[0])}</td><td>${mm(an[1])} ${dp(an[1],an[0])}</td></tr></tbody></table>
+   <table class="avgtb"><thead><tr><th></th><th>Weekday<br><small>${nwd} วัน</small></th><th>Weekend<br><small>${nwe} วัน</small></th><th class="avtot">Avg รวม<br><small>${nwd+nwe} วัน</small></th></tr></thead>
+   <tbody><tr><td>QTY</td><td>${fmt0(aq[0])}</td><td>${fmt0(aq[1])} ${dp(aq[1],aq[0])}</td><td class="avtot">${fmt0(aq[2])}</td></tr>
+   <tr><td>Net Amt</td><td>${mm(an[0])}</td><td>${mm(an[1])} ${dp(an[1],an[0])}</td><td class="avtot">${mm(an[2])}</td></tr></tbody></table>
    <div class="cmp" style="font-size:11.5px">1–${mtd} ${TH_MON[M]} ${Y}</div></div>`;
 }
 function renderArea(){
